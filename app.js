@@ -5,6 +5,8 @@ const listing = require("./models/listing.js");
 const path = require("path");
 const methodOverride = require("method-override");
 const ejsMate = require("ejs-mate");
+const wrapAsync = require("./utils/wrapAsync.js");
+const ExpressError = require("./utils/ExpressErrors.js");
 
 const port = 8080;
 
@@ -44,44 +46,94 @@ app.get("/", (req, res) => {
 // });
 
 //index route
-app.get("/listings", async (req, res) => {
-  const allListings = await listing.find({});
-  res.render("listings/index.ejs", { allListings });
-});
+app.get(
+  "/listings",
+  wrapAsync(async (req, res) => {
+    const allListings = await listing.find({});
+    res.render("listings/index.ejs", { allListings });
+  })
+);
 //new route
 app.get("/listings/new", (req, res) => {
   res.render("listings/new.ejs");
 });
 //create route
-app.post("/listings", async (req, res) => {
-  const newListing = new listing(req.body.listing);
-  await newListing.save();
-  res.redirect("/listings");
-});
+app.post(
+  "/listings",
+  wrapAsync(async (req, res, next) => {
+    if (!req.body || !req.body.listing) {
+      throw new ExpressError(400, "Send Valid Data For Listing");
+    }
+    const newListing = new listing(req.body.listing);
+    // if (!newListing.title) {
+    //   throw new ExpressError(400, " title is missing");
+    // }
+    // if (!newListing.description) {
+    //   throw new ExpressError(400, " description is missing");
+    // }
+    // if (!newListing.location) {
+    //   throw new ExpressError(400, " location is missing");
+    // }
+    // if (!newListing.country) {
+    //   throw new ExpressError(400, "country is missing ");
+    // }
+    // if (!newListing.price) {
+    //   throw new ExpressError(400, " price is missing");
+    // }
+    await newListing.save();
+    res.redirect("/listings");
+  })
+);
 //show route
-app.get("/listings/:id", async (req, res) => {
-  let { id } = req.params;
-  const foundListing = await listing.findById(id);
-  res.render("listings/show.ejs", { foundListing });
-});
+app.get(
+  "/listings/:id",
+  wrapAsync(async (req, res) => {
+    let { id } = req.params;
+    const foundListing = await listing.findById(id);
+    res.render("listings/show.ejs", { foundListing });
+  })
+);
 //edit route
-app.get("/listings/:id/edit", async (req, res) => {
-  let { id } = req.params;
-  const foundListing = await listing.findById(id);
-  res.render("listings/edit.ejs", { foundListing });
-});
+app.get(
+  "/listings/:id/edit",
+  wrapAsync(async (req, res) => {
+    let { id } = req.params;
+    const foundListing = await listing.findById(id);
+    res.render("listings/edit.ejs", { foundListing });
+  })
+);
 //update route
-app.put("/listings/:id", async (req, res) => {
-  let { id } = req.params;
-  await listing.findByIdAndUpdate(id, { ...req.body.listing });
-  res.redirect(`/listings/${id}`);
-});
+app.put(
+  "/listings/:id",
+  wrapAsync(async (req, res) => {
+    if (!req.body || !req.body.listing) {
+      throw new ExpressError(400, "Send Valid Data For Listing");
+    }
+    let { id } = req.params;
+    await listing.findByIdAndUpdate(id, { ...req.body.listing });
+    res.redirect(`/listings/${id}`);
+  })
+);
 //delete route
-app.delete("/listings/:id", async (req, res) => {
-  let { id } = req.params;
-  let deletedListing = await listing.findByIdAndDelete(id);
-  console.log(deletedListing);
-  res.redirect("/listings");
+app.delete(
+  "/listings/:id",
+  wrapAsync(async (req, res) => {
+    let { id } = req.params;
+    let deletedListing = await listing.findByIdAndDelete(id);
+    console.log(deletedListing);
+    res.redirect("/listings");
+  })
+);
+
+app.all("/*all", (req, res, next) => {
+  next(new ExpressError(404, "Page Not Found!"));
+});
+
+//error
+app.use((err, req, res, next) => {
+  let { status = 500, message = "something went wrong" } = err;
+  res.status(status).render("error.ejs", { message });
+  //res.status(status).send(message);
 });
 
 app.listen(port, () => {

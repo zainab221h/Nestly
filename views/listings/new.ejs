@@ -5,7 +5,12 @@
       <br /><br />
       <h3>Create new listing</h3>
 
-      <form method="post" action="/listings">
+      <form
+        method="post"
+        action="/listings"
+        novalidate
+        class="needs-validation"
+      >
         <div class="mb-3">
           <lable for="title" class="form-label">Title</lable>
           <input
@@ -13,11 +18,20 @@
             placeholder="enter a catchy title "
             type="text"
             class="form-control"
+            required
           />
+          <div class="valid-feedback">Title Looks Good!</div>
+          <div class="invalid-feedback">Please Enter The Title</div>
         </div>
         <div class="mb-3">
           <lable for="description" class="form-label">Description</lable>
-          <textarea name="listing[description]" class="form-control"></textarea>
+          <textarea
+            name="listing[description]"
+            class="form-control"
+            required
+          ></textarea>
+          <div class="valid-feedback">Description Looks Good!</div>
+          <div class="invalid-feedback">Please Enter The Description</div>
         </div>
         <div class="mb-3">
           <lable for="image" class="form-label">Image</lable>
@@ -34,9 +48,11 @@
             <input
               name="listing[price]"
               placeholder="1900"
-              type="number"
               class="form-control"
+              required
             />
+            <div class="valid-feedback">Price Looks Good!</div>
+            <div class="invalid-feedback">Please Enter The Price</div>
           </div>
 
           <div class="mb-3 col-md-8">
@@ -46,7 +62,10 @@
               name="listing[location]"
               placeholder="enter the location"
               class="form-control"
+              required
             />
+            <div class="valid-feedback">Location Looks Good!</div>
+            <div class="invalid-feedback">Please Enter The Location</div>
           </div>
         </div>
 
@@ -57,7 +76,10 @@
             name="listing[country]"
             placeholder="enter the country"
             class="form-control"
+            required
           />
+          <div class="valid-feedback">Country Looks Good!</div>
+          <div class="invalid-feedback">Please Enter The Country</div>
         </div>
 
         <button class="btn btn-dark add-btn mt-3">Add</button>
