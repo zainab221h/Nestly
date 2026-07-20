@@ -1,12 +1,16 @@
 const express = require("express");
 const app = express();
 const mongoose = require("mongoose");
-const listing = require("./models/listing.js");
+//const listing = require("./models/listing.js");
 const path = require("path");
 const methodOverride = require("method-override");
 const ejsMate = require("ejs-mate");
-const wrapAsync = require("./utils/wrapAsync.js");
+//const wrapAsync = require("./utils/wrapAsync.js");
 const ExpressError = require("./utils/ExpressErrors.js");
+//const { listingSchema, reviewSchema } = require("./schema.js");
+//const Review = require("./models/review.js");
+const listingRoutes = require("./routes/listing.js");
+const reviewRoutes = require("./routes/review.js");
 
 const port = 8080;
 
@@ -31,99 +35,9 @@ app.engine("ejs", ejsMate);
 app.get("/", (req, res) => {
   res.send("root");
 });
-// app.get("/testListing", async (req, res) => {
-//   let sampleListing = new listing({
-//     title: "Villa",
-//     description: "near swizzalps",
-//     //image: "",
-//     price: 38000,
-//     location: "",
-//     country: "Switzerland",
-//   });
-//   await sampleListing.save();
-//   console.log("listing saved");
-//   res.send("sucessfull listing");
-// });
 
-//index route
-app.get(
-  "/listings",
-  wrapAsync(async (req, res) => {
-    const allListings = await listing.find({});
-    res.render("listings/index.ejs", { allListings });
-  })
-);
-//new route
-app.get("/listings/new", (req, res) => {
-  res.render("listings/new.ejs");
-});
-//create route
-app.post(
-  "/listings",
-  wrapAsync(async (req, res, next) => {
-    if (!req.body || !req.body.listing) {
-      throw new ExpressError(400, "Send Valid Data For Listing");
-    }
-    const newListing = new listing(req.body.listing);
-    // if (!newListing.title) {
-    //   throw new ExpressError(400, " title is missing");
-    // }
-    // if (!newListing.description) {
-    //   throw new ExpressError(400, " description is missing");
-    // }
-    // if (!newListing.location) {
-    //   throw new ExpressError(400, " location is missing");
-    // }
-    // if (!newListing.country) {
-    //   throw new ExpressError(400, "country is missing ");
-    // }
-    // if (!newListing.price) {
-    //   throw new ExpressError(400, " price is missing");
-    // }
-    await newListing.save();
-    res.redirect("/listings");
-  })
-);
-//show route
-app.get(
-  "/listings/:id",
-  wrapAsync(async (req, res) => {
-    let { id } = req.params;
-    const foundListing = await listing.findById(id);
-    res.render("listings/show.ejs", { foundListing });
-  })
-);
-//edit route
-app.get(
-  "/listings/:id/edit",
-  wrapAsync(async (req, res) => {
-    let { id } = req.params;
-    const foundListing = await listing.findById(id);
-    res.render("listings/edit.ejs", { foundListing });
-  })
-);
-//update route
-app.put(
-  "/listings/:id",
-  wrapAsync(async (req, res) => {
-    if (!req.body || !req.body.listing) {
-      throw new ExpressError(400, "Send Valid Data For Listing");
-    }
-    let { id } = req.params;
-    await listing.findByIdAndUpdate(id, { ...req.body.listing });
-    res.redirect(`/listings/${id}`);
-  })
-);
-//delete route
-app.delete(
-  "/listings/:id",
-  wrapAsync(async (req, res) => {
-    let { id } = req.params;
-    let deletedListing = await listing.findByIdAndDelete(id);
-    console.log(deletedListing);
-    res.redirect("/listings");
-  })
-);
+app.use("/listings", listingRoutes);
+app.use("/listings/:id/reviews", reviewRoutes);
 
 app.all("/*all", (req, res, next) => {
   next(new ExpressError(404, "Page Not Found!"));
