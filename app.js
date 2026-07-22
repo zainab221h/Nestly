@@ -11,8 +11,12 @@ const ExpressError = require("./utils/ExpressErrors.js");
 //const Review = require("./models/review.js");
 const listingRoutes = require("./routes/listing.js");
 const reviewRoutes = require("./routes/review.js");
+const userRoutes = require("./routes/user.js");
 const session = require("express-session");
 const flash = require("connect-flash");
+const passport = require("passport");
+const localStrategy = require("passport-local");
+const User = require("./models/user.js");
 
 const port = 8080;
 
@@ -52,14 +56,24 @@ const sessionOption = {
 
 app.use(session(sessionOption));
 app.use(flash());
+
+app.use(passport.initialize());
+app.use(passport.session());
+passport.use(new localStrategy(User.authenticate()));
+
+passport.serializeUser(User.serializeUser());
+passport.deserializeUser(User.deserializeUser());
+
 app.use((req, res, next) => {
   res.locals.success = req.flash("success");
   res.locals.error = req.flash("error");
+  res.locals.currUser = req.user;
   next();
 });
 
 app.use("/listings", listingRoutes);
 app.use("/listings/:id/reviews", reviewRoutes);
+app.use("/", userRoutes);
 
 app.all("/*all", (req, res, next) => {
   next(new ExpressError(404, "Page Not Found!"));

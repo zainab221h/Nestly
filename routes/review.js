@@ -5,28 +5,23 @@ const { reviewSchema } = require("../schema.js");
 const ExpressError = require("../utils/ExpressErrors.js");
 const Review = require("../models/review.js");
 const listing = require("../models/listing.js");
-
-const validateReview = (req, res, next) => {
-  //console.log("BODY RECEIVED:", req.body);
-  let { error } = reviewSchema.validate(req.body || {});
-
-  if (error) {
-    //console.log("Validation error:", error.details);
-    let errMsg = error.details.map((el) => el.message).join(",");
-    throw new ExpressError(404, errMsg);
-  } else {
-    next();
-  }
-};
+const {
+  isLoggedIn,
+  isOwner,
+  validateReview,
+  isReviewAuthor,
+} = require("../middleware.js");
 
 //Review
 //Post route
 router.post(
   "/",
+  isLoggedIn,
   validateReview,
   wrapAsync(async (req, res) => {
     let Listing = await listing.findById(req.params.id);
     let newReview = new Review(req.body.review);
+    newReview.author = req.user._id;
     Listing.reviews.push(newReview);
     await newReview.save();
     await Listing.save();
@@ -40,6 +35,8 @@ router.post(
 //Delete route
 router.delete(
   "/:reviewId",
+  isLoggedIn,
+  isReviewAuthor,
   wrapAsync(async (req, res) => {
     let { id, reviewId } = req.params;
     await listing.findByIdAndUpdate(id, { $pull: { reviews: reviewId } });
