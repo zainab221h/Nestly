@@ -34,20 +34,14 @@ module.exports.showListing = async (req, res) => {
 };
 
 module.exports.createListing = async (req, res, next) => {
+  const query = `${req.body.listing.location}, ${req.body.listing.country}`;
   let response = await fetch(
-    `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
-      req.body.listing.location
-    )}&limit=1`,
-    {
-      headers: {
-        "User-Agent":
-          "NestlyApp/1.0 (student-project; contact: your-email@gmail.com)",
-      },
-    }
+    `https://api.opencagedata.com/geocode/v1/json?q=${encodeURIComponent(
+      query
+    )}&key=${process.env.OPENCAGE_API_KEY}&limit=1`
   );
 
   if (!response.ok) {
-    console.log("Nominatim response not ok:", response.status);
     req.flash(
       "error",
       "Location service temporarily unavailable, please try again"
@@ -55,16 +49,9 @@ module.exports.createListing = async (req, res, next) => {
     return res.redirect("/listings/new");
   }
 
-  let geoData;
-  try {
-    geoData = await response.json();
-  } catch (err) {
-    console.log("Nominatim returned non-JSON:", err);
-    req.flash("error", "Could not verify location, please try again");
-    return res.redirect("/listings/new");
-  }
+  let geoData = await response.json();
 
-  if (!geoData || geoData.length === 0) {
+  if (!geoData.results || geoData.results.length === 0) {
     req.flash("error", "Location not found, please enter a valid location");
     return res.redirect("/listings/new");
   }
@@ -77,7 +64,10 @@ module.exports.createListing = async (req, res, next) => {
 
   newListing.geometry = {
     type: "Point",
-    coordinates: [parseFloat(geoData[0].lon), parseFloat(geoData[0].lat)],
+    coordinates: [
+      geoData.results[0].geometry.lng,
+      geoData.results[0].geometry.lat,
+    ],
   };
 
   let savedListing = await newListing.save();
@@ -99,20 +89,27 @@ module.exports.RenderEditForm = async (req, res) => {
 module.exports.updateListing = async (req, res) => {
   let { id } = req.params;
   let Listing = await listing.findByIdAndUpdate(id, { ...req.body.listing });
+
   const query = `${req.body.listing.location}, ${req.body.listing.country}`;
   const response = await fetch(
-    `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
+    `https://api.opencagedata.com/geocode/v1/json?q=${encodeURIComponent(
       query
-    )}&limit=1`,
-    { headers: { "User-Agent": "NestlyApp" } }
+    )}&key=${process.env.OPENCAGE_API_KEY}&limit=1`
   );
-  const geoData = await response.json();
-  if (geoData.length > 0) {
-    Listing.geometry = {
-      type: "Point",
-      coordinates: [parseFloat(geoData[0].lon), parseFloat(geoData[0].lat)],
-    };
+
+  if (response.ok) {
+    const geoData = await response.json();
+    if (geoData.results && geoData.results.length > 0) {
+      Listing.geometry = {
+        type: "Point",
+        coordinates: [
+          geoData.results[0].geometry.lng,
+          geoData.results[0].geometry.lat,
+        ],
+      };
+    }
   }
+
   if (typeof req.file !== "undefined") {
     let url = req.file.path;
     let filename = req.file.filename;
