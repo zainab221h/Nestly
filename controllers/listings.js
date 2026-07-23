@@ -120,7 +120,7 @@ module.exports.generateDescription = async (req, res) => {
   const { title, location, country } = req.body;
 
   try {
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-flash-latest" });
     const prompt = `Write a warm, appealing Airbnb-style property description (2-3 sentences, max 60 words) for a listing titled "${title}" located in ${location}, ${country}. Only return the description text, no preamble.`;
 
     const result = await model.generateContent(prompt);
