@@ -13,6 +13,8 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.114.0",
+    "@google/generative-ai": "^0.24.1",
     "cloudinary": "^2.10.0",
     "connect-flash": "^0.1.1",
     "connect-mongo": "^6.0.0",

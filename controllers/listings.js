@@ -2,6 +2,8 @@ const express = require("express");
 const router = express.Router();
 const wrapAsync = require("../utils/wrapAsync.js");
 const listing = require("../models/listing.js");
+const { GoogleGenerativeAI } = require("@google/generative-ai");
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 //const Review = require("../models/review.js");
 const flash = require("connect-flash");
 const { isLoggedIn, isOwner, validateListing } = require("../middleware.js");
@@ -113,4 +115,20 @@ module.exports.searchListings = async (req, res) => {
     location: { $regex: destination, $options: "i" },
   });
   res.render("listings/index.ejs", { allListings });
+};
+module.exports.generateDescription = async (req, res) => {
+  const { title, location, country } = req.body;
+
+  try {
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+    const prompt = `Write a warm, appealing Airbnb-style property description (2-3 sentences, max 60 words) for a listing titled "${title}" located in ${location}, ${country}. Only return the description text, no preamble.`;
+
+    const result = await model.generateContent(prompt);
+    const description = result.response.text();
+
+    res.json({ description });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to generate description" });
+  }
 };

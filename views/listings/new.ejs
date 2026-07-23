@@ -26,6 +26,13 @@
         </div>
         <div class="mb-3">
           <lable for="description" class="form-label">Description</lable>
+          <button
+            type="button"
+            id="generateBtn"
+            class="btn btn-outline-success btn-sm mb-2"
+          >
+            ✨ Generate Description with AI
+          </button>
           <textarea
             name="listing[description]"
             class="form-control"
@@ -80,6 +87,47 @@
 
         <button class="btn btn-dark add-btn mt-3">Add</button>
       </form>
+      <script>
+        document
+          .getElementById("generateBtn")
+          .addEventListener("click", async () => {
+            const title = document.querySelector(
+              '[name="listing[title]"]'
+            ).value;
+            const location = document.querySelector(
+              '[name="listing[location]"]'
+            ).value;
+            const country = document.querySelector(
+              '[name="listing[country]"]'
+            ).value;
+
+            if (!title || !location || !country) {
+              alert("Pehle title, location aur country bhar do");
+              return;
+            }
+
+            const btn = document.getElementById("generateBtn");
+            const originalText = btn.textContent;
+            btn.textContent = "Generating...";
+            btn.disabled = true;
+
+            try {
+              const res = await fetch("/listings/generate-description", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ title, location, country }),
+              });
+              const data = await res.json();
+              document.querySelector('[name="listing[description]"]').value =
+                data.description;
+            } catch (err) {
+              alert("Description generate nahi ho payi, dobara try karo");
+            } finally {
+              btn.textContent = originalText;
+              btn.disabled = false;
+            }
+          });
+      </script>
     </body>
   </div>
 </div>

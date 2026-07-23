@@ -23,6 +23,12 @@ router
   );
 
 router.get("/search", wrapAsync(listingController.searchListings));
+
+router.post(
+  "/generate-description",
+  isLoggedIn,
+  wrapAsync(listingController.generateDescription)
+);
 //new route
 router.get("/new", isLoggedIn, listingController.renderNewForm);
 
