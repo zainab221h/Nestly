@@ -19,6 +19,9 @@ const localStrategy = require("passport-local");
 const User = require("./models/user.js");
 
 const port = 8080;
+app.get("/", (req, res) => {
+  res.redirect("/listings");
+});
 
 // const MONGO_URL = "mongodb://127.0.0.1:27017/nestly";
 const dbUrl = process.env.ATLASDB_URL;
@@ -96,9 +99,7 @@ app.use((err, req, res, next) => {
   res.status(status).render("error.ejs", { message });
   //res.status(status).send(message);
 });
-app.get("/", (req, res) => {
-  res.redirect("/listings");
-});
+
 app.listen(port, () => {
   console.log("listening on port 8080");
 });
