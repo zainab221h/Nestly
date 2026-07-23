@@ -12,6 +12,7 @@ const listingRoutes = require("./routes/listing.js");
 const reviewRoutes = require("./routes/review.js");
 const userRoutes = require("./routes/user.js");
 const session = require("express-session");
+const { MongoStore } = require("connect-mongo");
 const flash = require("connect-flash");
 const passport = require("passport");
 const localStrategy = require("passport-local");
@@ -19,7 +20,8 @@ const User = require("./models/user.js");
 
 const port = 8080;
 
-const MONGO_URL = "mongodb://127.0.0.1:27017/nestly";
+// const MONGO_URL = "mongodb://127.0.0.1:27017/nestly";
+const dbUrl = process.env.ATLASDB_URL;
 main()
   .then(() => {
     console.log("Connected To Databasw");
@@ -27,7 +29,7 @@ main()
   .catch((err) => console.log(err));
 
 async function main() {
-  await mongoose.connect(MONGO_URL);
+  await mongoose.connect(dbUrl);
 
   // use `await mongoose.connect('mongodb://user:password@127.0.0.1:27017/test');` if your database has auth enabled
 }
@@ -38,12 +40,20 @@ app.use(methodOverride("_method"));
 app.use(express.static(path.join(__dirname, "/public")));
 app.engine("ejs", ejsMate);
 
-app.get("/", (req, res) => {
-  res.send("root");
+const store = MongoStore.create({
+  mongoUrl: dbUrl,
+  crypto: {
+    secret: process.env.SECRET,
+  },
+  touchAfter: 24 * 3600,
+});
+store.on("err", () => {
+  console.log("error in mongo session store", err);
 });
 
 const sessionOption = {
-  secret: "secretcode",
+  store,
+  secret: process.env.SECRET,
   resave: false,
   saveUninitialized: true,
   cookie: {
