@@ -38,10 +38,36 @@ module.exports.createListing = async (req, res, next) => {
     `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
       req.body.listing.location
     )}&limit=1`,
-    { headers: { "User-Agent": "NestlyApp" } }
+    {
+      headers: {
+        "User-Agent":
+          "NestlyApp/1.0 (student-project; contact: your-email@gmail.com)",
+      },
+    }
   );
-  let geoData = await response.json();
-  console.log(geoData);
+
+  if (!response.ok) {
+    console.log("Nominatim response not ok:", response.status);
+    req.flash(
+      "error",
+      "Location service temporarily unavailable, please try again"
+    );
+    return res.redirect("/listings/new");
+  }
+
+  let geoData;
+  try {
+    geoData = await response.json();
+  } catch (err) {
+    console.log("Nominatim returned non-JSON:", err);
+    req.flash("error", "Could not verify location, please try again");
+    return res.redirect("/listings/new");
+  }
+
+  if (!geoData || geoData.length === 0) {
+    req.flash("error", "Location not found, please enter a valid location");
+    return res.redirect("/listings/new");
+  }
 
   let url = req.file.path;
   let filename = req.file.filename;
